@@ -1,0 +1,94 @@
+services:
+  entrypoint:
+    container_name: entrypoint-prometheus
+    image: api-test-prometheus
+    build:
+      context: ./Api.Prometheus
+      dockerfile: Dockerfile
+    ports:
+      - 5180:80
+    environment:
+      - ASPNETCORE_URLS=http://+:80   
+    networks:
+      - prometheus-net
+    mem_limit: 50M
+    cpus: 0.25
+
+
+  operational:
+    container_name: operational-prometheus
+    image: api-test-prometheus
+    ports:
+      - 5181:80
+    environment:
+      - ASPNETCORE_URLS=http://+:80   
+    networks:
+      - prometheus-net
+    depends_on:
+      - entrypoint
+    mem_limit: 50M
+    cpus: 0.25
+
+
+  core:
+    container_name: core-prometheus
+    image: api-test-prometheus
+    ports:
+      - 5182:80
+    environment:
+      - ASPNETCORE_URLS=http://+:80   
+    networks:
+      - prometheus-net
+    depends_on:
+      - entrypoint
+    mem_limit: 50M
+    cpus: 0.25
+    
+  
+  worker:
+    container_name: worker-prometheus
+    image: api-test-prometheus
+    ports:
+      - 5183:80
+    environment:
+      - ASPNETCORE_URLS=http://+:80   
+    networks:
+      - prometheus-net
+    depends_on:
+      - entrypoint
+    mem_limit: 50M
+    cpus: 0.25
+
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
+      - ./alert.rule.yaml:/etc/prometheus/alerts.rules
+    networks:
+      - prometheus-net
+    depends_on:
+      - entrypoint
+      
+
+  alert-manager:
+    image: prom/alertmanager:v0.27.0
+    ports:
+      - 9093:9093
+    volumes:
+      - ./alertmanager.yaml:/prometheus/alertmanager.yml
+      - ./alertmanager-entrypoint.sh:/prometheus/entrypoint.sh
+    entrypoint: ["/bin/sh", "/prometheus/entrypoint.sh"]
+    # command:
+    #   - '--config.file=/prometheus/alertmanager.yml'
+    environment:
+      - SLACK_API_URL=${SLACK_API_URL}
+    networks:
+      - prometheus-net
+
+
+networks:
+  prometheus-net:
+    driver: bridge

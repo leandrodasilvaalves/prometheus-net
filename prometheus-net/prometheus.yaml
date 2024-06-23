@@ -1,0 +1,62 @@
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 15s
+
+rule_files:
+  - alerts.rules
+
+
+alerting:
+  alertmanagers:
+    - scheme: http
+      static_configs:
+        - targets:
+            - "alert-manager:9093"
+
+            
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: [localhost:9090]
+
+  - job_name: entrypoint
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    static_configs:
+      - targets:
+          - "entrypoint:80"
+        labels:
+          versao: "1.0"
+          env: "prd"
+
+
+  - job_name: operational
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    static_configs:
+      - targets:
+          - "operational:80"
+        labels:
+          versao: "1.0"
+          env: "sdb"
+  
+  - job_name: core
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    static_configs:
+      - targets:
+          - "core:80"
+        labels:
+          versao: "1.0"
+          env: "stg"
+  
+  - job_name: worker
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    static_configs:
+      - targets:
+          - "worker:80"
+        labels:
+          versao: "1.0"
+          env: "stg"
