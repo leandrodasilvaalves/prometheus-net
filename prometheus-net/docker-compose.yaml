@@ -3,7 +3,7 @@ services:
     container_name: entrypoint-prometheus
     image: api-test-prometheus
     build:
-      context: ./Api.Prometheus
+      context: ./api-prometheus
       dockerfile: Dockerfile
     ports:
       - 5180:80
@@ -65,8 +65,8 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
-      - ./alert.rule.yaml:/etc/prometheus/alerts.rules
+      - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml
+      - ./prometheus/alert.rule.yaml:/etc/prometheus/alerts.rules
     networks:
       - prometheus-net
     depends_on:
@@ -84,8 +84,8 @@ services:
     ports:
       - 9093:9093
     volumes:
-      - ./alertmanager.yaml:/prometheus/alertmanager.yml
-      - ./alertmanager-entrypoint.sh:/prometheus/entrypoint.sh
+      - ./prometheus/alertmanager/alertmanager.yaml:/prometheus/alertmanager.yml
+      - ./prometheus/alertmanager/alertmanager-entrypoint.sh:/prometheus/entrypoint.sh
     entrypoint: ["/bin/sh", "/prometheus/entrypoint.sh"]
     # command:
     #   - '--config.file=/prometheus/alertmanager.yml'

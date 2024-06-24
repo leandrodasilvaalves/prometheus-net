@@ -12,7 +12,6 @@ var app = builder.Build();
 app.UseRouting();
 app.UseHttpMetrics(o =>
 {
-    o.AddRouteParameter("api-version");
     o.AddCustomLabel("host", ctx => ctx.Request.Host.Value);
 });
 app.MapMetrics();
