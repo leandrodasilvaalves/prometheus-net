@@ -71,6 +71,12 @@ services:
       - prometheus-net
     depends_on:
       - entrypoint
+    healthcheck:
+        test: wget -q --tries=1 -O- http://localhost:9090/
+        interval: 3s
+        timeout: 3s
+        retries: 10
+        start_period: 10s
       
 
   alert-manager:
@@ -85,6 +91,20 @@ services:
     #   - '--config.file=/prometheus/alertmanager.yml'
     environment:
       - SLACK_API_URL=${SLACK_API_URL}
+    networks:
+      - prometheus-net
+
+  grafana:
+    image: grafana/grafana:10.4.4-ubuntu
+    container_name: prometheusnetsample_grafana
+    ports:
+     - 3000:3000
+    volumes:
+        - ./grafana/provisioning/datasource:/etc/grafana/provisioning/datasources
+        - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards    
+    depends_on:
+      prometheus:
+            condition: service_healthy
     networks:
       - prometheus-net
 
