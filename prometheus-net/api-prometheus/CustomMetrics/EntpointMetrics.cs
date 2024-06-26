@@ -28,6 +28,6 @@ public static class ListWeatherForecast
     public static readonly Histogram ResponseTime = Metrics.CreateHistogram(
         "list_weatherforecast_time_response", string.Empty, new HistogramConfiguration
         {
-            Buckets = Histogram.PowersOfTenDividedBuckets(0, 2, 10)
+            Buckets = Histogram.PowersOfTenDividedBuckets(0, 2, 10),
         });
 }

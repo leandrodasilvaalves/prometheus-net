@@ -101,13 +101,21 @@ services:
      - 3000:3000
     volumes:
         - ./grafana/provisioning/datasource:/etc/grafana/provisioning/datasources
-        - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards    
+        - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards  
+        - grafana-storage:/var/lib/grafana:rw
     depends_on:
       prometheus:
             condition: service_healthy
+    environment:
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_BASIC_ENABLED=false
+      - GF_ENABLE_GZIP=true
     networks:
-      - prometheus-net
+      - prometheus-net  
 
+volumes:
+  grafana-storage: {}
 
 networks:
   prometheus-net:
