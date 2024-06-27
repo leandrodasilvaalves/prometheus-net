@@ -10,7 +10,7 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:80   
     networks:
-      - prometheus-net
+      - observability
     mem_limit: 50M
     cpus: 0.25
 
@@ -23,7 +23,7 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:80   
     networks:
-      - prometheus-net
+      - observability
     depends_on:
       - entrypoint
     mem_limit: 50M
@@ -38,7 +38,7 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:80   
     networks:
-      - prometheus-net
+      - observability
     depends_on:
       - entrypoint
     mem_limit: 50M
@@ -53,7 +53,7 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:80   
     networks:
-      - prometheus-net
+      - observability
     depends_on:
       - entrypoint
     mem_limit: 50M
@@ -65,10 +65,11 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml
-      - ./prometheus/alert.rule.yaml:/etc/prometheus/alerts.rules
+      - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alert.rule.yaml:/etc/prometheus/alerts.rules:ro
+      - prometheus-storage:/prometheus:rw
     networks:
-      - prometheus-net
+      - observability
     depends_on:
       - entrypoint
     healthcheck:
@@ -92,7 +93,7 @@ services:
     environment:
       - SLACK_API_URL=${SLACK_API_URL}
     networks:
-      - prometheus-net
+      - observability
 
   grafana:
     image: grafana/grafana:10.4.4-ubuntu
@@ -106,17 +107,18 @@ services:
     depends_on:
       prometheus:
             condition: service_healthy
-    environment:
-      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-      - GF_AUTH_ANONYMOUS_ENABLED=true
-      - GF_AUTH_BASIC_ENABLED=false
-      - GF_ENABLE_GZIP=true
+    # environment:
+    #   - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    #   - GF_AUTH_ANONYMOUS_ENABLED=true
+    #   - GF_AUTH_BASIC_ENABLED=false
+    #   - GF_ENABLE_GZIP=true
     networks:
-      - prometheus-net  
+      - observability  
 
 volumes:
   grafana-storage: {}
+  prometheus-storage: {}
 
 networks:
-  prometheus-net:
+  observability:
     driver: bridge
