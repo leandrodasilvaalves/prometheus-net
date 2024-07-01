@@ -60,3 +60,28 @@ scrape_configs:
         labels:
           versao: "1.0"
           env: "stg"
+
+  - job_name: rabbit_mq
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    static_configs:
+      - targets:
+          - "rabbit:15692"
+        labels:
+          versao: "1.0"
+          env: "stg"
+          broker: rabbit
+          protocol: amqp
+  
+  - job_name: rabbit_mq_perobject
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    metrics_path: "/metrics/per-object"
+    static_configs:
+      - targets:
+          - "rabbit:15692"
+        labels:
+          versao: "1.0"
+          env: "stg"
+          broker: rabbit
+          protocol: amqp

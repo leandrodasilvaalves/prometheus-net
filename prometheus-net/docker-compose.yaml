@@ -60,6 +60,19 @@ services:
     cpus: 0.25
 
 
+  rabbit:
+    image: rabbitmq:3-management
+    container_name: observability.rabbit
+    ports:
+      - "15672:15672"
+      - "15692:15692"
+      - "5672:5672"
+    networks:
+      - observability
+    volumes:
+      - ./rabbit/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+
+
   prometheus:
     image: prom/prometheus:v2.53.0
     ports:
