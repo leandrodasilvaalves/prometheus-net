@@ -9,6 +9,8 @@ services:
       - 5180:80
     environment:
       - ASPNETCORE_URLS=http://+:80   
+      - ASPNETCORE_ENVIRONMENT=${ASPNET_ENV}
+      - Rabbit__ReceiveEndpoint=entrypoint.prometheus
     networks:
       - observability
     mem_limit: 50M
@@ -22,6 +24,8 @@ services:
       - 5181:80
     environment:
       - ASPNETCORE_URLS=http://+:80   
+      - ASPNETCORE_ENVIRONMENT=${ASPNET_ENV}
+      - Rabbit__ReceiveEndpoint=operational.prometheus
     networks:
       - observability
     depends_on:
@@ -37,6 +41,8 @@ services:
       - 5182:80
     environment:
       - ASPNETCORE_URLS=http://+:80   
+      - ASPNETCORE_ENVIRONMENT=${ASPNET_ENV}
+      - Rabbit__ReceiveEndpoint=core.prometheus
     networks:
       - observability
     depends_on:
@@ -52,6 +58,8 @@ services:
       - 5183:80
     environment:
       - ASPNETCORE_URLS=http://+:80   
+      - ASPNETCORE_ENVIRONMENT=${ASPNET_ENV}
+      - Rabbit__ReceiveEndpoint=worker.prometheus
     networks:
       - observability
     depends_on:
@@ -121,7 +129,7 @@ services:
       prometheus:
             condition: service_healthy
     # environment:
-    #   - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    #   - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin # TODO: Essas variáveis habilitadas atrapalha instalar plugins. Analisar.
     #   - GF_AUTH_ANONYMOUS_ENABLED=true
     #   - GF_AUTH_BASIC_ENABLED=false
     #   - GF_ENABLE_GZIP=true

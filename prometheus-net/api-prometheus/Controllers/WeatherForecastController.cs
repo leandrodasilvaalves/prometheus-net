@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using Api.Prometheus.Consumers;
 using Api.Prometheus.CustomMetrics;
+using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Prometheus.Controllers;
@@ -9,11 +11,20 @@ namespace Api.Prometheus.Controllers;
 public class WeatherForecastController : ControllerBase
 {
     private readonly string[] summaries = ["Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"];
+    public readonly IPublishEndpoint _publishEndpoint;
+    private readonly RabbitConfig _rabbitConfig;
+
+    public WeatherForecastController(IPublishEndpoint publishEndpoint,
+                                     RabbitConfig rabbitConfig)
+    {
+        _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
+        _rabbitConfig = rabbitConfig ?? throw new ArgumentNullException(nameof(rabbitConfig));
+    }
 
     public List<WeatherForecast> Data = [];
 
     [HttpGet]
-    public IActionResult Get()
+    public async Task<IActionResult> GetAsync()
     {
         try
         {
@@ -32,6 +43,11 @@ public class WeatherForecastController : ControllerBase
             ))
             .ToArray();
 
+            if (_rabbitConfig.Enabled)
+            {
+                await _publishEndpoint.Publish(forecast.FirstOrDefault());
+            }
+
             ListWeatherForecast.Success.Inc();
             ListWeatherForecast.ResponseTime.Observe(stopwatch.ElapsedMilliseconds);
             return Ok(forecast);
@@ -44,7 +60,7 @@ public class WeatherForecastController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult Post([FromBody] WeatherForecast request)
+    public async Task<IActionResult> PostAsync([FromBody] WeatherForecast request)
     {
         try
         {
@@ -55,6 +71,10 @@ public class WeatherForecastController : ControllerBase
                 throw new Exception("There's been an error");
 
             Data.Add(request);
+            if (_rabbitConfig.Enabled)
+            {
+                await _publishEndpoint.Publish(request);
+            }
             RegisterWeatherForeCastMetrics.Success.Inc();
             RegisterWeatherForeCastMetrics.ResponseTime.Observe(stopwatch.ElapsedMilliseconds);
             return Ok(request);
