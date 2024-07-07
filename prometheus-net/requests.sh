@@ -1,6 +1,6 @@
 #!/bin/bash
 
-requests=25
+requests=15
 interval_min=1
 interval_max=5
 

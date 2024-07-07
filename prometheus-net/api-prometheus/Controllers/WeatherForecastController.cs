@@ -33,6 +33,8 @@ public class WeatherForecastController : ControllerBase
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
+            await SimulateDelay();
+
             if (WeatherForecast.Validate() is false)
                 throw new Exception("There's been an error");
 
@@ -64,6 +66,8 @@ public class WeatherForecastController : ControllerBase
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
+            
+            await SimulateDelay();
 
             if (WeatherForecast.Validate() is false)
                 throw new Exception("There's been an error");
@@ -83,6 +87,9 @@ public class WeatherForecastController : ControllerBase
             return new StatusCodeResult(500);
         }
     }
+
+    private Task SimulateDelay() =>
+        Task.Delay(TimeSpan.FromMicroseconds(Random.Shared.Next(500, 5000)));
 
 }
 
