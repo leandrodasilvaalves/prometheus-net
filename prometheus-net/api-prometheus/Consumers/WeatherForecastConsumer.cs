@@ -11,6 +11,9 @@ public class WeatherForecastConsumer(ILogger<WeatherForecastConsumer> logger) : 
 
     public async Task Consume(ConsumeContext<WeatherForecast> context)
     {
+        if (WeatherForecast.Validate() is false)
+            throw new Exception("There's been an error");
+            
         await Task.Delay(TimeSpan.FromSeconds(6));
         _logger.LogInformation("Message: {0}", JsonSerializer.Serialize(context.Message, options));
     }

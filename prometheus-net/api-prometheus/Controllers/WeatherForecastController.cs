@@ -1,7 +1,10 @@
 using System.Diagnostics;
+
 using Api.Prometheus.Consumers;
 using Api.Prometheus.CustomMetrics;
+
 using MassTransit;
+
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Prometheus.Controllers;
@@ -10,7 +13,6 @@ namespace Api.Prometheus.Controllers;
 [Route("api/weatherforecast")]
 public class WeatherForecastController : ControllerBase
 {
-    private readonly string[] summaries = ["Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"];
     public readonly IPublishEndpoint _publishEndpoint;
     private readonly RabbitConfig _rabbitConfig;
 
@@ -31,17 +33,13 @@ public class WeatherForecastController : ControllerBase
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            if (Validate() is false)
+            if (WeatherForecast.Validate() is false)
                 throw new Exception("There's been an error");
 
-            var forecast = Enumerable.Range(1, 5).Select(index =>
-            new WeatherForecast
-            (
-                DateTime.Now.AddDays(index),
-                Random.Shared.Next(-20, 55),
-                summaries[Random.Shared.Next(summaries.Length)]
-            ))
-            .ToArray();
+            var forecast = Enumerable
+                                .Range(1, 5)
+                                .Select(WeatherForecast.Generate)
+                                .ToArray();
 
             if (_rabbitConfig.Enabled)
             {
@@ -67,7 +65,7 @@ public class WeatherForecastController : ControllerBase
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            if (Validate() is false)
+            if (WeatherForecast.Validate() is false)
                 throw new Exception("There's been an error");
 
             Data.Add(request);
@@ -86,10 +84,18 @@ public class WeatherForecastController : ControllerBase
         }
     }
 
-    private static bool Validate() => DateTime.UtcNow.Second % 2 == 0;
 }
 
-public record WeatherForecast(DateTime Date, int TemperatureC, string? Summary)
+public record WeatherForecast(DateTime Date, int TemperatureC, string Summary)
 {
+    private static readonly string[] Summaries = ["Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"];
+
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    public static bool Validate() => DateTime.UtcNow.Second % 2 == 0;
+
+    public static WeatherForecast Generate(int addDays = 0) => new(
+        DateTime.Now.AddDays(addDays),
+        Random.Shared.Next(-20, 55),
+        Summaries[Random.Shared.Next(Summaries.Length)]
+    );
 }
