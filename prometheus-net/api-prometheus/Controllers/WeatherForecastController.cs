@@ -13,7 +13,7 @@ namespace Api.Prometheus.Controllers;
 [Route("api/weatherforecast")]
 public class WeatherForecastController : ControllerBase
 {
-    public readonly IPublishEndpoint _publishEndpoint;
+    private readonly IPublishEndpoint _publishEndpoint;
     private readonly RabbitConfig _rabbitConfig;
 
     public WeatherForecastController(IPublishEndpoint publishEndpoint,
@@ -33,7 +33,7 @@ public class WeatherForecastController : ControllerBase
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            await SimulateDelay();
+            await Simulator.Delay();
 
             if (WeatherForecast.Validate() is false)
                 throw new Exception("There's been an error");
@@ -48,13 +48,11 @@ public class WeatherForecastController : ControllerBase
                 await _publishEndpoint.Publish(forecast.FirstOrDefault());
             }
 
-            ListWeatherForecast.Success.Inc();
-            ListWeatherForecast.ResponseTime.Observe(stopwatch.ElapsedMilliseconds);
+            CustomMetric.Endpoint.Observe(stopwatch.ElapsedMilliseconds);
             return Ok(forecast);
         }
         catch (Exception)
         {
-            ListWeatherForecast.Error.Inc();
             return new StatusCodeResult(500);
         }
     }
@@ -66,8 +64,8 @@ public class WeatherForecastController : ControllerBase
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            
-            await SimulateDelay();
+
+            await Simulator.Delay();
 
             if (WeatherForecast.Validate() is false)
                 throw new Exception("There's been an error");
@@ -77,27 +75,38 @@ public class WeatherForecastController : ControllerBase
             {
                 await _publishEndpoint.Publish(request);
             }
-            RegisterWeatherForeCastMetrics.Success.Inc();
-            RegisterWeatherForeCastMetrics.ResponseTime.Observe(stopwatch.ElapsedMilliseconds);
+            CustomMetric.Endpoint.Observe(stopwatch.ElapsedMilliseconds);
             return Ok(request);
         }
         catch (Exception)
         {
-            RegisterWeatherForeCastMetrics.Error.Inc();
             return new StatusCodeResult(500);
         }
     }
-
-    private Task SimulateDelay() =>
-        Task.Delay(TimeSpan.FromMicroseconds(Random.Shared.Next(500, 5000)));
-
 }
 
-public record WeatherForecast(DateTime Date, int TemperatureC, string Summary)
+public class WeatherForecast(DateTime date, int temperatureC, string summary)
 {
-    private static readonly string[] Summaries = ["Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"];
+    private static readonly string[] Summaries =
+    [
+        "Freezing",
+        "Bracing",
+        "Chilly",
+        "Cool",
+        "Mild",
+        "Warm",
+        "Balmy",
+        "Hot",
+        "Sweltering",
+        "Scorching"
+    ];
 
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+
+    public DateTime Date { get; } = date;
+    public int TemperatureC { get; } = temperatureC;
+    public string Summary { get; } = summary;
+
     public static bool Validate() => DateTime.UtcNow.Second % 2 == 0;
 
     public static WeatherForecast Generate(int addDays = 0) => new(

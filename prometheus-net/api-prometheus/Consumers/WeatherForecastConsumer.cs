@@ -1,5 +1,9 @@
+using System.Diagnostics;
 using System.Text.Json;
+
 using Api.Prometheus.Controllers;
+using Api.Prometheus.CustomMetrics;
+
 using MassTransit;
 
 namespace Api.Prometheus.Consumers;
@@ -11,60 +15,22 @@ public class WeatherForecastConsumer(ILogger<WeatherForecastConsumer> logger) : 
 
     public async Task Consume(ConsumeContext<WeatherForecast> context)
     {
-        if (WeatherForecast.Validate() is false)
-            throw new Exception("There's been an error");
-            
-        await Task.Delay(TimeSpan.FromSeconds(6));
-        _logger.LogInformation("Message: {0}", JsonSerializer.Serialize(context.Message, options));
-    }
-}
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
 
-public class RabbitConfig
-{
-    public string Host { get; set; }
-    public string VHost { get; set; }
-    public string User { get; set; }
-    public string Pass { get; set; }
-    public bool Enabled { get; set; }
-    public string ReceiveEndpoint { get; set; }
-};
-
-public static class MassTransitExtensions
-{
-    public static void ConfigureMassTransit(this IServiceCollection services, IConfiguration configuration)
-    {
-        var config = new RabbitConfig();
-        configuration.GetSection("Rabbit").Bind(config);
-        services.AddSingleton(config);
-
-        services.AddMassTransit(x =>
+        try
         {
-            if (config.Enabled)
+            await Simulator.Delay(max: 10_000);
+            if (WeatherForecast.Validate() is false)
             {
-                x.AddConsumer<WeatherForecastConsumer>();
+                throw new Exception("There's been an error");
             }
 
-            x.UsingRabbitMq((context, cfg) =>
-            {
-                cfg.Host(config.Host, config.VHost, h =>
-                {
-                    h.Username(config.User);
-                    h.Password(config.Pass);
-                });
-
-                if (config.Enabled)
-                {
-                    cfg.ReceiveEndpoint(config.ReceiveEndpoint, endpoint =>
-                    {
-                        endpoint.ConfigureConsumer<WeatherForecastConsumer>(context, consumer =>
-                            consumer.UseMessageRetry(retry =>
-                                retry.Interval(5, TimeSpan.FromSeconds(2))));
-                    });
-                }
-
-                cfg.ConfigureEndpoints(context);
-            });
-        });
+            _logger.LogInformation("Message: {0}", JsonSerializer.Serialize(context.Message, options));
+        }
+        finally
+        {
+            CustomMetric.Consumer.Observe(stopwatch.ElapsedMilliseconds);
+        }
     }
-
 }

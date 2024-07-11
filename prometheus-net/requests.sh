@@ -1,8 +1,8 @@
 #!/bin/bash
 
-requests=15
+requests=10
 interval_min=1
-interval_max=5
+interval_max=10
 
 execute_request() {
     count=0
