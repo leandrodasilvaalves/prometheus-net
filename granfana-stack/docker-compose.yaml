@@ -1,85 +1,13 @@
-volumes:
-  grafana: {}
-  postgres: {}
-  prometheus: {}
-
 services:
-  opentelemetry-collector:
-    image: otel/opentelemetry-collector-contrib:0.105.0
+  grafana-lgtm:
+    image: grafana/otel-lgtm:0.6.0
+    container_name: grafana-otel-lgtm
     ports:
-      - "12347:12345"
-      - "12348:12348"
-      - "6832:6832"
-      - "55679:55679"
-    volumes:
-      - ./otel/otel.yml:/etc/otel-collector-config.yml
-    command: ["--config=/etc/otel-collector-config.yml"]
-
-  grafana:
-    image: grafana/grafana:11.0.0
-    volumes:
-      - "./grafana/definitions:/var/lib/grafana/dashboards"
-      - "./grafana/provisioning:/etc/grafana/provisioning"
-    ports:
-      - "3000:3000"
+      - 3000:3000
+      - 4317:4317
+      - 4318:4318
     environment:
-      - GF_FEATURE_TOGGLES_ENABLE=flameGraph traceqlSearch correlations traceQLStreaming metricsSummary traceqlEditor traceToMetrics traceToProfiles datatrails
-      - GF_INSTALL_PLUGINS=https://storage.googleapis.com/integration-artifacts/grafana-lokiexplore-app/grafana-lokiexplore-app-latest.zip;grafana-lokiexplore-app
+      - OTEL_METRIC_EXPORT_INTERVAL=1000
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_DISABLE_LOGIN_FORM=true
-
-  tempo:
-    image: grafana/tempo:2.4.1
-    ports:
-      - "3200:3200"
-      - "4317:4317"
-      - "55680:55680"
-      - "55681:55681"
-      - "14250:14250"
-    command: [ "-config.file=/etc/tempo.yaml" ]
-    volumes:
-      - "./tempo/tempo.yaml:/etc/tempo.yaml"
-
-  loki:
-    image: grafana/loki:3.0.0
-    command: ["--pattern-ingester.enabled=true", "-config.file=/etc/loki/loki.yaml"]
-    ports:
-      - "3100:3100"
-    volumes:
-      - "./loki/loki.yaml:/etc/loki/loki.yaml"
-
-  mimir:
-    image: grafana/mimir:2.12.0
-    command: ["-ingester.native-histograms-ingestion-enabled=true", "-config.file=/etc/mimir.yaml"]
-    ports:
-      - "9009:9009"
-    volumes:
-      - "./mimir/mimir.yaml:/etc/mimir.yaml"
-
-  prometheus:
-    image: prom/prometheus:v2.53.0
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
-      - ./prometheus/alert.rule.yaml:/etc/prometheus/alerts.rules:ro
-      - prometheus:/prometheus:rw
-    healthcheck:
-        test: wget -q --tries=1 -O- http://localhost:9090/
-        interval: 3s
-        timeout: 3s
-        retries: 10
-        start_period: 10s
-      
-
-  alert-manager:
-    image: prom/alertmanager:v0.27.0
-    ports:
-      - 9093:9093
-    volumes:
-      - ./alertmanager/alertmanager.yaml:/prometheus/alertmanager.yml
-      - ./alertmanager/alertmanager-entrypoint.sh:/prometheus/entrypoint.sh
-    entrypoint: ["/bin/sh", "/prometheus/entrypoint.sh"]
-    environment:
-      - SLACK_API_URL=${SLACK_API_URL}
