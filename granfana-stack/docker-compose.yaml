@@ -1,4 +1,47 @@
 services:
+  entrypoint:
+    container_name: entrypoint
+    image: api-otel
+    build:
+      context: ./ApiOtel
+      dockerfile: Dockerfile
+    ports:
+      - 5280:80
+    environment:
+      - ASPNETCORE_URLS=http://+:80 
+      - OpenTelemetry__ServiceName=entrypoint
+      - ASPNETCORE_ENVIRONMENT=Docker
+    mem_limit: 50M
+    cpus: 0.25
+  
+  operational:
+    container_name: operational
+    image: api-otel    
+    ports:
+      - 5281:80
+    environment:
+      - ASPNETCORE_URLS=http://+:80 
+      - OpenTelemetry__ServiceName=operational
+      - ASPNETCORE_ENVIRONMENT=Docker
+    mem_limit: 50M
+    cpus: 0.25
+    depends_on: 
+     - entrypoint
+  
+  core:
+    container_name: core
+    image: api-otel    
+    ports:
+      - 5282:80
+    environment:
+      - ASPNETCORE_URLS=http://+:80
+      - OpenTelemetry__ServiceName=core 
+      - ASPNETCORE_ENVIRONMENT=Docker
+    mem_limit: 50M
+    cpus: 0.25
+    depends_on:
+      - operational
+
   grafana-lgtm:
     image: grafana/otel-lgtm:0.6.0
     container_name: grafana-otel-lgtm

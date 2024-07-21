@@ -7,9 +7,10 @@ using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
-const string serviceName = "api-otel";
+var serviceName = builder.Configuration.GetSection("OpenTelemetry:ServiceName").Value;
+
 var otelEndpoint = builder.Configuration
-    .GetSection("OpenTelemetry:Exporter:Otlp:Endpoint").Get<string>();
+    .GetSection("OpenTelemetry:Exporter:Otlp:Endpoint").Value;
 var uriOtel = new Uri(otelEndpoint);
 
 builder.Logging.AddOpenTelemetry(options =>
