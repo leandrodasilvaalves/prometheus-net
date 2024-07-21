@@ -1,0 +1,8 @@
+FROM ubuntu:24.04
+
+WORKDIR /app
+
+RUN apt-get update -y \
+    && apt-get install -y curl
+
+ENTRYPOINT [ "/app/request.sh" ]

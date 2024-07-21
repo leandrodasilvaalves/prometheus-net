@@ -59,3 +59,14 @@ services:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_DISABLE_LOGIN_FORM=true
+
+  request-runner:
+    image: leandroalves86/ubuntu-curl
+    container_name:  request-runner
+    build:
+      context: .
+      dockerfile: Dockerfile.Ubuntu
+    volumes:
+      - ./request.sh:/app/request.sh
+    mem_limit: 150M
+    cpus: 0.25
