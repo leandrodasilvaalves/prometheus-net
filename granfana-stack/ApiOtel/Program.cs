@@ -7,11 +7,12 @@ using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var serviceName = builder.Configuration.GetSection("OpenTelemetry:ServiceName").Value;
+var serviceName = builder.Configuration["OpenTelemetry:ServiceName"];
+var clientMode = builder.Configuration["Mode"] == "CLIENT";
 
-var otelEndpoint = builder.Configuration
-    .GetSection("OpenTelemetry:Exporter:Otlp:Endpoint").Value;
+var otelEndpoint = builder.Configuration["OpenTelemetry:Exporter:Otlp:Endpoint"];
 var uriOtel = new Uri(otelEndpoint);
+
 
 builder.Logging.AddOpenTelemetry(options =>
 {
@@ -52,6 +53,13 @@ builder.Services.AddOpenTelemetry()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+if (clientMode)
+{
+    builder.Services.
+        AddHttpClient<IWeatherForecastClient, WeatherForecastClient>(client =>
+            client.BaseAddress = new Uri(builder.Configuration["Client:Url"]));
+}
+
 var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -59,9 +67,14 @@ app.UseHttpsRedirection();
 
 CustomResults.ConfigureLogger(app.Logger);
 
-app.MapGet("/weatherforecast", async ([FromServices] ILogger<Program> logger) =>
+app.MapGet("/weatherforecast", async ([FromServices] IWeatherForecastClient client) =>
 {
     await Simulator.Delay();
+    if (clientMode)
+    {
+        var result = await client.GetAsync();
+        return result.ToHttpRespose();
+    }
     return Simulator.Response(WeatherForecast.Generate());
 })
 .WithName("GetWeatherForecast")

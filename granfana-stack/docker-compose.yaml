@@ -11,6 +11,8 @@ services:
       - ASPNETCORE_URLS=http://+:80 
       - OpenTelemetry__ServiceName=entrypoint
       - ASPNETCORE_ENVIRONMENT=Docker
+      - Mode=CLIENT
+      - Client__Url=http://operational
     mem_limit: 50M
     cpus: 0.25
   
@@ -23,6 +25,8 @@ services:
       - ASPNETCORE_URLS=http://+:80 
       - OpenTelemetry__ServiceName=operational
       - ASPNETCORE_ENVIRONMENT=Docker
+      - Mode=CLIENT
+      - Client__Url=http://core
     mem_limit: 50M
     cpus: 0.25
     depends_on: 
@@ -37,6 +41,7 @@ services:
       - ASPNETCORE_URLS=http://+:80
       - OpenTelemetry__ServiceName=core 
       - ASPNETCORE_ENVIRONMENT=Docker
+      - Mode=SERVER
     mem_limit: 50M
     cpus: 0.25
     depends_on:

@@ -1,4 +1,3 @@
-using FluentResults;
 
 namespace ApiOtel;
 
@@ -15,11 +14,10 @@ public class Simulator
         var status = statusCodeList.FirstOrDefault();
         return status switch
         {
-            200 => CustomResults.Ok(weatherForecast),
-            400 => CustomResults.BadRequest(new Error("ERROR 400 Family")),
-            500 => CustomResults.Problem(new Error("ERROR 500 Family")),
-            _ => CustomResults.Problem(new Error("Unmaped error"))
+            200 => CustomResults.Ok(new HttpResult(weatherForecast)),
+            400 => CustomResults.BadRequest(new HttpResult(400, Error.BadRequest)),
+            500 => CustomResults.Problem(Error.InternalError),
+            _ => CustomResults.Problem("Unmaped error"),
         };
     }
-
 }

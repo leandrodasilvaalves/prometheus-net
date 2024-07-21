@@ -1,5 +1,4 @@
 using System.Text.Json;
-using FluentResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ApiOtel;
@@ -11,29 +10,35 @@ public static class CustomResults
     public static void ConfigureLogger(ILogger logger) =>
         Logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
+    public static IResult ToHttpRespose(this HttpResult result) => result.StatusCode switch
+    {
+        200 => Ok(result),
+        400 => BadRequest(result),
+        _ => Problem(result.Error)
+    };
+
     public static IResult Ok(object value)
     {
-        var result = Result.Ok(value);
-        Logger.LogInformation(JsonSerializer.Serialize(result));
-        return Results.Ok(result);
+        Logger.LogInformation(JsonSerializer.Serialize(value));
+        return Results.Ok(value);
     }
 
-    public static IResult BadRequest(IError error)
+    public static IResult BadRequest(object error)
     {
-        var result = Result.Fail(error);
-        Logger.LogWarning(JsonSerializer.Serialize(result));
-        return Results.BadRequest(result);
+        Logger.LogWarning(JsonSerializer.Serialize(error));
+        return Results.BadRequest(error);
     }
 
-    public static IResult Problem(IError error)
-    {
-        var result = JsonSerializer.Serialize(error);
-        Logger.LogError(result);
+    public static IResult Problem(Error error) => Problem(error.Message);
 
+    public static IResult Problem(string error)
+    {
+        Logger.LogError(error);
         var detail = new ProblemDetails
         {
             Title = "Error",
-            Detail = result
+            Detail = error,
+            Status = 500,
         };
         return Results.Problem(detail);
     }

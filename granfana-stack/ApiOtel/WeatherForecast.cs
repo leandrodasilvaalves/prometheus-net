@@ -1,26 +1,34 @@
 namespace ApiOtel;
 
-public class WeatherForecast(DateTime date, int temperatureC, string summary)
+public class WeatherForecast
 {
     private static readonly string[] Summaries =
     [
         "Freezing",
-    "Bracing",
-    "Chilly",
-    "Cool",
-    "Mild",
-    "Warm",
-    "Balmy",
-    "Hot",
-    "Sweltering",
-    "Scorching"
+        "Bracing",
+        "Chilly",
+        "Cool",
+        "Mild",
+        "Warm",
+        "Balmy",
+        "Hot",
+        "Sweltering",
+        "Scorching"
     ];
 
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    public WeatherForecast() { }
 
-    public DateTime Date { get; } = date;
-    public int TemperatureC { get; } = temperatureC;
-    public string Summary { get; } = summary;
+    public WeatherForecast(DateTime date, int temperatureC, string summary)
+    {
+        Date = date;
+        TemperatureC = temperatureC;
+        Summary = summary;
+    }
+
+    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    public DateTime Date { get; set; }
+    public int TemperatureC { get; set; }
+    public string Summary { get; set; }
 
     public static bool Validate() => DateTime.UtcNow.Second % 2 == 0;
 
