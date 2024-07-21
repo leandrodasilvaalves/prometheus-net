@@ -1,4 +1,4 @@
-using System.Text.Json;
+using ApiOtel;
 using Microsoft.AspNetCore.Mvc;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -56,20 +56,12 @@ app.UseSwagger();
 app.UseSwaggerUI();
 app.UseHttpsRedirection();
 
-app.MapGet("/weatherforecast", ([FromServices] ILogger<Program> logger) =>
-{
-    logger.LogInformation("Any information {0}", Guid.NewGuid());
-    logger.LogWarning("Any warnging {0}", Guid.NewGuid());
+CustomResults.ConfigureLogger(app.Logger);
 
-    var forecast = Enumerable.Range(1, 5)
-        .Select(index =>
-        {
-            var weatherforecast = WeatherForecast.Generate(index);
-            logger.LogError("Something very bad happened: {0}", JsonSerializer.Serialize(weatherforecast));
-            return weatherforecast;
-        })
-        .ToArray();
-    return forecast;
+app.MapGet("/weatherforecast", async ([FromServices] ILogger<Program> logger) =>
+{
+    await Simulator.Delay();
+    return Simulator.Response(WeatherForecast.Generate());
 })
 .WithName("GetWeatherForecast")
 .WithOpenApi();

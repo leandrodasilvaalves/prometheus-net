@@ -1,21 +1,19 @@
-
-
-
+namespace ApiOtel;
 
 public class WeatherForecast(DateTime date, int temperatureC, string summary)
 {
     private static readonly string[] Summaries =
     [
         "Freezing",
-        "Bracing",
-        "Chilly",
-        "Cool",
-        "Mild",
-        "Warm",
-        "Balmy",
-        "Hot",
-        "Sweltering",
-        "Scorching"
+    "Bracing",
+    "Chilly",
+    "Cool",
+    "Mild",
+    "Warm",
+    "Balmy",
+    "Hot",
+    "Sweltering",
+    "Scorching"
     ];
 
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
