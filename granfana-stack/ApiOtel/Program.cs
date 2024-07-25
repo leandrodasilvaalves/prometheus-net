@@ -1,55 +1,11 @@
 using ApiOtel;
 using Microsoft.AspNetCore.Mvc;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var serviceName = builder.Configuration["OpenTelemetry:ServiceName"];
 var clientMode = builder.Configuration["Mode"] == "CLIENT";
 
-var otelEndpoint = builder.Configuration["OpenTelemetry:Exporter:Otlp:Endpoint"];
-var uriOtel = new Uri(otelEndpoint);
-
-
-builder.Logging.AddOpenTelemetry(options =>
-{
-    options
-        .SetResourceBuilder(
-            ResourceBuilder.CreateDefault()
-                .AddService(serviceName))
-        .AddConsoleExporter()
-        .AddOtlpExporter(opt =>
-        {
-            opt.Endpoint = uriOtel;
-            opt.ExportProcessorType = OpenTelemetry.ExportProcessorType.Simple;
-        });
-    options.IncludeFormattedMessage = true;
-    options.ParseStateValues = true;
-});
-
-builder.Services.AddOpenTelemetry()
-      .ConfigureResource(resource => resource.AddService(serviceName))
-      .WithTracing(tracing => tracing
-          .AddSource(serviceName)
-          .AddAspNetCoreInstrumentation()
-          .AddConsoleExporter()
-          .AddOtlpExporter(opt =>
-          {
-              opt.Endpoint = uriOtel;
-              opt.ExportProcessorType = OpenTelemetry.ExportProcessorType.Simple;
-          }))
-      .WithMetrics(metrics => metrics
-          .AddAspNetCoreInstrumentation()
-          .AddConsoleExporter()
-          .AddOtlpExporter(opt =>
-          {
-              opt.Endpoint = uriOtel;
-              opt.ExportProcessorType = OpenTelemetry.ExportProcessorType.Simple;
-          }));
-
+builder.ConfigureOpenTelemetry();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -63,19 +19,28 @@ if (clientMode)
 var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
-app.UseHttpsRedirection();
 
 CustomResults.ConfigureLogger(app.Logger);
 
-app.MapGet("/weatherforecast", async ([FromServices] IWeatherForecastClient client) =>
+app.MapGet("/weatherforecast", async ([FromServices] IWeatherForecastClient client,
+                                      [FromServices] ILogger<Program> logger) =>
 {
+    using var activity = OtelConfig.StartActivity("ApiOtelActiviy");
+    logger.LogInformation("Some log using opentelemtry");
+    OtelConfig.ReceivedRequestsInc();
+
     await Simulator.Delay();
     if (clientMode)
     {
+        logger.LogWarning("Client Mode activated");
+        activity?.SetTag("test-1", "Hello World!");
+        activity?.SetTag("foo", "bar");
+
         var result = await client.GetAsync();
         return result.ToHttpRespose();
     }
     return Simulator.Response(WeatherForecast.Generate());
+
 })
 .WithName("GetWeatherForecast")
 .WithOpenApi();

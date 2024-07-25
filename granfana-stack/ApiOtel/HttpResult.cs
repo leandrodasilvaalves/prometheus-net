@@ -1,3 +1,5 @@
+using System.Net;
+
 namespace ApiOtel;
 
 public class HttpResult
@@ -20,6 +22,13 @@ public class HttpResult
     public WeatherForecast Value { get; set; }
     public Error Error { get; set; }
     public bool IsSuccess => StatusCode >= 200 && StatusCode <= 299;
+
+    public static HttpResult BadRequest(Error error = null) =>
+        new((int)HttpStatusCode.BadRequest, error ?? Error.BadRequest);
+
+    public static HttpResult InternalError(Error error = null) =>
+        new((int)HttpStatusCode.InternalServerError, error ?? Error.InternalError);
+
 }
 
 public class Error

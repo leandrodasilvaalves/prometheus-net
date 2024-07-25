@@ -1,6 +1,6 @@
 #!/bin/bash
 
-requests=5
+requests=10
 interval_min=1
 interval_max=10
 
@@ -15,7 +15,7 @@ execute_request() {
         echo
         curl -X GET $url_service/weatherforecast -H "accept: text/plain"
 
-        # Generate a random wait time between 1 and 4 seconds
+        # Generate a random wait time between $interval_min and $interval_max seconds
         wait_time=$((RANDOM % ($interval_max - $interval_min + 1) + $interval_min))
         echo "Waiting $wait_time second(s)"
         sleep $wait_time

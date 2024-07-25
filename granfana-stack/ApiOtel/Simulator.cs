@@ -4,7 +4,7 @@ namespace ApiOtel;
 public class Simulator
 {
     public static Task Delay(int min = 500, int max = 10000) =>
-        Task.Delay(TimeSpan.FromMicroseconds(Random.Shared.Next(min, max)));
+        Task.Delay(TimeSpan.FromMilliseconds(Random.Shared.Next(min, max)));
 
     public static IResult Response(WeatherForecast weatherForecast)
     {

@@ -27,11 +27,11 @@ public class WeatherForecastClient(HttpClient httpClient, ILogger<WeatherForecas
         if (exception.Message.Contains("400"))
         {
             _logger.LogWarning("Warning: {0}, {1}", exception.Message, JsonSerializer.Serialize(exception.StackTrace));
-            return new HttpResult { StatusCode = 400, Error = Error.BadRequest };
+            return HttpResult.BadRequest();
         }
 
         _logger.LogError("Error: {0}, {1}", exception.Message, JsonSerializer.Serialize(exception.StackTrace));
-        return new HttpResult { StatusCode = 500, Error = Error.InternalError };
+        return HttpResult.InternalError();
     }
 }
 

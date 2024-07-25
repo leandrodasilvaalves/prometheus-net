@@ -65,8 +65,10 @@ services:
     container_name:  request-runner
     build:
       context: .
-      dockerfile: Dockerfile.Ubuntu
+      dockerfile: Dockerfile.Ubuntu.Curl
     volumes:
       - ./request.sh:/app/request.sh
     mem_limit: 150M
     cpus: 0.25
+    depends_on:
+      - entrypoint
