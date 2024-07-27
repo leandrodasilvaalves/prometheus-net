@@ -10,18 +10,43 @@ namespace ApiOtel;
 
 public static class OtelConfig
 {
-    public static Meter CustomMeter { get; private set; }
-    public static Counter<int> ReceivedRequestsMeter { get; private set; }
-    public static ActivitySource ActivitySource { get; private set; }
-    public static string ServiceName { get; private set; }
+    private static Meter CustomMeter { get; set; }
+    private static Counter<int> ReceivedRequestsMeter { get; set; }
+    private static ActivitySource ActivitySource { get; set; }
+    private static string ServiceName { get; set; }
 
     public static void ConfigureOpenTelemetry(this WebApplicationBuilder builder)
     {
         var otelEndpoint = builder.Configuration["OpenTelemetry:Exporter:Otlp:Endpoint"];
         var uriOtel = new Uri(otelEndpoint);
         var serviceName = builder.Configuration["OpenTelemetry:ServiceName"];
+        ServiceName = serviceName;
 
-        builder.Logging.AddOpenTelemetry(options =>
+        CustomMeter = new($"{serviceName}.Api.Otel", "1.0.0");
+        ReceivedRequestsMeter = CustomMeter.CreateCounter<int>("api_otel_received_requests", "req", "Count requests");
+        ActivitySource = new($"{serviceName}.WeatherForecast", "1.0.0");
+
+        var otel = builder.Services.AddOpenTelemetry();
+        ConfigureTracing(otel, serviceName, uriOtel);
+        ConfigureMetrics(otel, uriOtel);
+        ConfigureLogging(builder.Logging, serviceName, uriOtel);
+    }
+
+    public static Activity StartActivity(string name)
+    {
+        ArgumentNullException.ThrowIfNull(ActivitySource);
+        return ActivitySource.StartActivity($"{ServiceName}.{name}");
+    }
+
+    public static void ReceivedRequestsInc()
+    {
+        ArgumentNullException.ThrowIfNull(ReceivedRequestsMeter);
+        ReceivedRequestsMeter.Add(1, new KeyValuePair<string, object?>("tagName", "tagValue"));
+    }
+
+    private static void ConfigureLogging(ILoggingBuilder builder, string serviceName, Uri uriOtel)
+    {
+        builder.AddOpenTelemetry(options =>
         {
             options
                 .SetResourceBuilder(
@@ -36,10 +61,12 @@ public static class OtelConfig
             options.IncludeFormattedMessage = true;
             options.ParseStateValues = true;
         });
+    }
 
-        _ = builder.Services.AddOpenTelemetry()
-        .ConfigureResource(resource => resource.AddService(serviceName))
-        .WithTracing(tracing => tracing
+    private static void ConfigureTracing(OpenTelemetryBuilder otel, string serviceName, Uri uriOtel)
+    {
+        otel.ConfigureResource(resource => resource.AddService(serviceName))
+            .WithTracing(tracing => tracing
             .AddSource(serviceName)
             .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation()
@@ -48,33 +75,20 @@ public static class OtelConfig
             {
                 opt.Endpoint = uriOtel;
                 opt.ExportProcessorType = ExportProcessorType.Simple;
-            }))
-        .WithMetrics(metrics => metrics
+            }));
+    }
+
+    private static void ConfigureMetrics(OpenTelemetryBuilder otel, Uri uriOtel)
+    {
+        otel.WithMetrics(metrics => metrics
             .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation()
+            .AddMeter(CustomMeter.Name)
             .AddConsoleExporter()
             .AddOtlpExporter(opt =>
             {
                 opt.Endpoint = uriOtel;
                 opt.ExportProcessorType = ExportProcessorType.Simple;
             }));
-
-
-        CustomMeter = new($"{serviceName}.Api.Otel");
-        ReceivedRequestsMeter = CustomMeter.CreateCounter<int>("api_otel_received_requests");
-        ActivitySource = new($"{serviceName}.WeatherForecast", "1.0.0");
-        ServiceName = serviceName;
-    }
-    
-    public static Activity StartActivity(string name)
-    {
-        ArgumentNullException.ThrowIfNull(ActivitySource);
-        return ActivitySource.StartActivity($"{ServiceName}.{name}");
-    }
-
-    public static void ReceivedRequestsInc()
-    {
-        ArgumentNullException.ThrowIfNull(ReceivedRequestsMeter);
-        ReceivedRequestsMeter.Add(1);
     }
 }
