@@ -4,21 +4,23 @@
         "http": {
             "commandName": "Project",
             "dotnetRunMessages": true,
-            "launchBrowser": true,
+            "launchBrowser": false,
             "launchUrl": "swagger",
             "applicationUrl": "http://localhost:5110",
             "environmentVariables": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
+                "OTEL_METRIC_EXPORT_INTERVAL": "500",
             }
         },
         "https": {
             "commandName": "Project",
             "dotnetRunMessages": true,
-            "launchBrowser": true,
+            "launchBrowser": false,
             "launchUrl": "swagger",
             "applicationUrl": "https://localhost:7288;http://localhost:5110",
             "environmentVariables": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
+                "OTEL_METRIC_EXPORT_INTERVAL": "500",
             }
         }
     }

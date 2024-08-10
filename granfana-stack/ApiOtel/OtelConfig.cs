@@ -12,6 +12,7 @@ public static class OtelConfig
 {
     private static Meter CustomMeter { get; set; }
     private static Counter<int> ReceivedRequestsMeter { get; set; }
+    private static Histogram<int> IntHistogram { get; set; }
     private static ActivitySource ActivitySource { get; set; }
     private static string ServiceName { get; set; }
 
@@ -24,6 +25,8 @@ public static class OtelConfig
 
         CustomMeter = new($"{serviceName}.Api.Otel", "1.0.0");
         ReceivedRequestsMeter = CustomMeter.CreateCounter<int>("api_otel_received_requests", "req", "Count requests");
+        IntHistogram = CustomMeter.CreateHistogram<int>("int_histogram", "number", "Some int histogram");
+
         ActivitySource = new($"{serviceName}.WeatherForecast", "1.0.0");
 
         var otel = builder.Services.AddOpenTelemetry();
@@ -41,7 +44,19 @@ public static class OtelConfig
     public static void ReceivedRequestsInc()
     {
         ArgumentNullException.ThrowIfNull(ReceivedRequestsMeter);
-        ReceivedRequestsMeter.Add(1, new KeyValuePair<string, object?>("tagName", "tagValue"));
+        ReceivedRequestsMeter.Add(1, new KeyValuePair<string, object>("tagName", "tagValue"));
+    }
+
+    public static void AddHistogram()
+    {
+        ArgumentNullException.ThrowIfNull(IntHistogram);
+        IntHistogram.Record(Random.Shared.Next(1, 100), new KeyValuePair<string, object>("tagName", "tagValue"));
+    }
+
+    public static void AddHistogram(int value)
+    {
+        ArgumentNullException.ThrowIfNull(IntHistogram);
+        IntHistogram.Record(value, new KeyValuePair<string, object>("weatherforecast", value));
     }
 
     private static void ConfigureLogging(ILoggingBuilder builder, string serviceName, Uri uriOtel)

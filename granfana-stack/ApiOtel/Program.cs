@@ -28,6 +28,7 @@ app.MapGet("/weatherforecast", async ([FromServices] IWeatherForecastClient clie
     using var activity = OtelConfig.StartActivity("ApiOtelActiviy");
     logger.LogInformation("Some log using opentelemtry");
     OtelConfig.ReceivedRequestsInc();
+    OtelConfig.AddHistogram();
 
     await Simulator.Delay();
     if (clientMode)
@@ -45,4 +46,13 @@ app.MapGet("/weatherforecast", async ([FromServices] IWeatherForecastClient clie
 .WithName("GetWeatherForecast")
 .WithOpenApi();
 
+app.MapPost("/weatherforecast", (int value)=>
+{
+    OtelConfig.AddHistogram(value);
+    return Results.Accepted();
+})
+.WithName("PostWeatherForecast")
+.WithOpenApi();
+
 app.Run();
+
