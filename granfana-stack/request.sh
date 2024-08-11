@@ -24,6 +24,17 @@ execute_request() {
     done
 }
 
+execute_post_request() {
+    count=1
+    while true; do
+        weatherforecast=$((RANDOM % ($35 - 2 + 1) + 2))
+        curl -X 'POST' http://localhost:5110/weatherforecast?value=$weatherforecast -H 'accept: */*' -d ''
+        echo count: $count
+        count=$((count + 1))
+        sleep 2
+    done
+}
+
 for ((i = 1; i <= requests; i++)); do
     echo "Executing requests! (Index: $i)"
     execute_request &
