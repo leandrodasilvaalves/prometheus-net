@@ -100,6 +100,13 @@ public static class OtelConfig
             .AddHttpClientInstrumentation()
             .AddMeter(CustomMeter.Name)
             .AddConsoleExporter()
+            .AddView(
+                instrumentName: "int_histogram",
+                new ExplicitBucketHistogramConfiguration
+                {
+                    Boundaries = [15, 30, 45, 60, 75]
+                }
+            )
             .AddOtlpExporter(opt =>
             {
                 opt.Endpoint = uriOtel;
